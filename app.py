@@ -47,10 +47,6 @@ def main():
             else:  # message is an image
                 st.image(message["content"], use_column_width=True)
 
-    # # Store chat history to db.json
-    # db = {'chat_history': st.session_state.chat_history}
-    # with open(DB_FILE, 'w') as file:
-    #     json.dump(db, file)
 
 if __name__ == '__main__':
 
@@ -102,3 +98,5 @@ if __name__ == '__main__':
                     st.rerun()
                 else:
                     st.error("API Key is required to login")
+
+                    
