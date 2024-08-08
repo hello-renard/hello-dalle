@@ -6,42 +6,11 @@ from io import BytesIO
 import os
 import json
 
-API_KEYS_FILE = 'api_keys.json'
+DB_FILE = 'db.json'
 
-def save_api_key(key_name, key_value):
-    if os.path.exists(API_KEYS_FILE):
-        with open(API_KEYS_FILE, 'r') as file:
-            keys = json.load(file)
-    else:
-        keys = {}
-    keys[key_name] = key_value
-    with open(API_KEYS_FILE, 'w') as file:
-        json.dump(keys, file)
-
-def load_api_keys():
-    if os.path.exists(API_KEYS_FILE):
-        with open(API_KEYS_FILE, 'r') as file:
-            keys = json.load(file)
-        return keys
-    return {}
-
-st.sidebar.header('Your OpenAI API Key:')
-keys = load_api_keys()
-api_key_name = st.sidebar.selectbox("Existing API Key", list(keys.keys()))
-new_key_name = st.sidebar.text_input("New Key Name")
-new_key_value = st.sidebar.text_input("New Key Value", type="password")
-if st.sidebar.button("Save New Key"):
-    if new_key_name and new_key_value:
-        save_api_key(new_key_name, new_key_value)
-        st.sidebar.success(f"Key '{new_key_name}' saved successfully.")
-        st.rerun()
-    else:
-        st.sidebar.error("Both Key Name and Value are required")
-
-if api_key_name:
-    client = OpenAI(api_key=keys[api_key_name])
-
-    st.title('DALL-E 3 Image Generator')
+def main():
+    client = OpenAI(api_key=st.session_state.openai_api_key)
+    st.title('DALL-E 3 Text-to-Image Generator')
     prompt = st.chat_input('Enter your prompt')
 
     # Initialize chat history
@@ -76,6 +45,60 @@ if api_key_name:
             if isinstance(message["content"], str):
                 st.markdown(message["content"])
             else:  # message is an image
-                st.image(message["content"], caption='Generated Image', use_column_width=True)
-else:
-    st.error('Please provide an OpenAI API Key')
+                st.image(message["content"], use_column_width=True)
+
+    # # Store chat history to db.json
+    # db = {'chat_history': st.session_state.chat_history}
+    # with open(DB_FILE, 'w') as file:
+    #     json.dump(db, file)
+
+if __name__ == '__main__':
+
+    if 'openai_api_key' in st.session_state and st.session_state.openai_api_key:
+        main()
+    
+    else:
+
+        # if the DB_FILE not exists, create it
+        if not os.path.exists(DB_FILE):
+            with open(DB_FILE, 'w') as file:
+                db = {
+                    'openai_api_keys': [],
+                }
+                json.dump(db, file)
+        # load the database
+        else:
+            with open(DB_FILE, 'r') as file:
+                db = json.load(file)
+
+        # display the selectbox from db['openai_api_keys']
+        selected_key = st.selectbox(
+            label = "Existing OpenAI API Keys", 
+            options = db['openai_api_keys']
+        )
+
+        # a text input box for entering a new key
+        new_key = st.text_input(
+            label="New OpenAI API Key", 
+            type="password"
+        )
+
+        login = st.button("Login")
+
+        # if new_key is given, add it to db['openai_api_keys']
+        # if new_key is not given, use the selected_key
+        if login:
+            if new_key:
+                db['openai_api_keys'].append(new_key)
+                with open(DB_FILE, 'w') as file:
+                    json.dump(db, file)
+                st.success("Key saved successfully.")
+                st.session_state['openai_api_key'] = new_key
+                st.rerun()
+            else:
+                if selected_key:
+                    st.success(f"Logged in with key '{selected_key}'")
+                    st.session_state['openai_api_key'] = selected_key
+                    st.rerun()
+                else:
+                    st.error("API Key is required to login")
