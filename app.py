@@ -30,7 +30,7 @@ def main():
           size="512x512",
           quality="hd",
           style="natural",
-          n=4,
+          n=1,
         )
 
         image_url = response.data[0].url
