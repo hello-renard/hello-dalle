@@ -27,9 +27,10 @@ def main():
         response = client.images.generate(
           model="dall-e-3",
           prompt=all_prompts,
-          size="1024x1024",
-          quality="standard",
-          n=1,
+          size="512x512",
+          quality="hd",
+          style="natural",
+          n=4,
         )
 
         image_url = response.data[0].url
